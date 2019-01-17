@@ -1,0 +1,47 @@
+version: "3.3"
+volumes:
+  htdocs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.43.20
+      device: ":/var/nfs/web"
+services:
+  web:
+    image: tutum/apache-php
+    environment:
+      - ALLOW_OVERRIDE=true
+    volumes:
+      - type: volume
+        source: htdocs
+        target: /app
+    ports:
+      - "80:80"
+    networks:
+      - overlay
+    deploy:
+      replicas: 7
+      restart_policy:
+        condition: on-failure
+  mysql:
+    image: mariadb
+    volumes:
+       - type: bind
+         source: ./mysql
+         target: /var/lib/mysql
+    environment:
+       MYSQL_ROOT_PASSWORD: root
+       MYSQL_USER: admin
+       MYSQL_PASSWORD: test
+       MYSQL_DATABASE: database
+    ports:
+       - "8889:3306"
+    networks:
+       - overlay
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  overlay:
